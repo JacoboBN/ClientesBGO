@@ -256,7 +256,7 @@ df_filtrado = df_filtrado[
 max_locales_rotulo = st.sidebar.slider(
     "Máximo de locales por mismo rótulo",
     min_value=3,
-    max_value=30,
+    max_value=200,
     value=3
 )
 
@@ -301,7 +301,7 @@ tipo_mapa = st.sidebar.radio(
 max_puntos_mapa = st.sidebar.slider(
     "Máximo de puntos en el mapa",
     min_value=500,
-    max_value=20000,
+    max_value=45000,
     value=5000,
     step=500
 )
@@ -414,7 +414,6 @@ with col1:
                 <b>Actividad:</b> {row.get('desc_epigrafe', '')}<br>
                 <b>División:</b> {row.get('desc_division', '')}<br>
                 <b>Sección:</b> {row.get('desc_seccion', '')}<br>
-                <b>Situación:</b> {row.get('desc_situacion_local', '')}<br>
                 <b>Distrito:</b> {row.get('desc_distrito_local', '')}<br>
                 <b>Barrio:</b> {row.get('desc_barrio_local', '')}<br>
                 <b>Dirección:</b> {row.get('direccion', '')}<br>
@@ -576,7 +575,6 @@ st.subheader("Locales filtrados")
 columnas_mostrar = [
     "id_local",
     "rotulo",
-    "desc_situacion_local",
     "desc_distrito_local",
     "desc_barrio_local",
     "direccion",
