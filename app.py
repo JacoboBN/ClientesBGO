@@ -407,9 +407,9 @@ if len(df_filtrado) > 0:
         metric="haversine"
     )
 
-    df_filtrado["cluster"] = modelo.fit_predict(coords)
+    df_filtrado["cluster_visita"] = modelo.fit_predict(coords)
 else:
-    df_filtrado["cluster"] = -1
+    df_filtrado["cluster_visita"] = -1
 
 
 # =========================
@@ -518,7 +518,7 @@ with col1:
                 # <b>Dirección:</b> {row.get('direccion', '')}<br>
                 # <b>Agrupación:</b> {row.get('nombre_agrupacion', '')}<br>
                 # <b>Tipo agrupación:</b> {row.get('desc_tipo_agrup', '')}<br>
-                # <b>Cluster:</b> {row.get('cluster', '')}
+                # <b>Cluster:</b> {row.get('cluster_visita', '')}
                 # """
 
                 folium.Marker(
@@ -534,7 +534,7 @@ with col1:
                 <b>Distrito:</b> {row.get('desc_distrito_local', '')}<br>
                 <b>Barrio:</b> {row.get('desc_barrio_local', '')}<br>
                 <b>Dirección:</b> {row.get('direccion', '')}<br>
-                <b>Cluster:</b> {row.get('cluster', '')}
+                <b>Cluster:</b> {row.get('cluster_visita', '')}
                 """
 
                 folium.CircleMarker(
