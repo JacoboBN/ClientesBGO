@@ -94,23 +94,23 @@ df = cargar_datos()
 
 st.sidebar.header("Filtros comerciales")
 
-# Filtro situación
-situaciones = ["Todas"] + sorted(
-    df["desc_situacion_local"].dropna().unique().tolist()
-)
+# # Filtro situación
+# situaciones = ["Todas"] + sorted(
+#     df["desc_situacion_local"].dropna().unique().tolist()
+# )
 
-situacion_seleccionada = st.sidebar.multiselect(
-    "Situación del local",
-    situaciones,
-    default=["Todas"]
-)
+# situacion_seleccionada = st.sidebar.multiselect(
+#     "Situación del local",
+#     situaciones,
+#     default=["Todas"]
+# )
 
-df_filtrado = df.copy()
+# df_filtrado = df.copy()
 
-if "Todas" not in situacion_seleccionada:
-    df_filtrado = df_filtrado[
-        df_filtrado["desc_situacion_local"].isin(situacion_seleccionada)
-    ]
+# if "Todas" not in situacion_seleccionada:
+#     df_filtrado = df_filtrado[
+#         df_filtrado["desc_situacion_local"].isin(situacion_seleccionada)
+#     ]
 
 
 # Filtro distrito
@@ -232,7 +232,7 @@ if texto_rotulo.strip() != "":
 # Mínimo de locales por rótulo
 min_locales_rotulo = st.sidebar.slider(
     "Mínimo de locales por mismo rótulo",
-    min_value=1,
+    min_value=2,
     max_value=30,
     value=1
 )
@@ -250,6 +250,31 @@ rotulos_validos = conteo_rotulos[
 df_filtrado = df_filtrado[
     df_filtrado["rotulo_norm"].isin(rotulos_validos)
 ].copy()
+
+
+# Máximo de locales por rótulo
+max_locales_rotulo = st.sidebar.slider(
+    "Máximo de locales por mismo rótulo",
+    min_value=3,
+    max_value=30,
+    value=1
+)
+
+conteo_rotulos = (
+    df_filtrado.groupby("rotulo_norm")
+    .agg(n_locales=("id_local", "nunique"))
+    .reset_index()
+)
+
+rotulos_validos = conteo_rotulos[
+    conteo_rotulos["n_locales"] >= max_locales_rotulo
+]["rotulo_norm"]
+
+df_filtrado = df_filtrado[
+    df_filtrado["rotulo_norm"].isin(rotulos_validos)
+].copy()
+
+
 
 
 # Número de clusters
