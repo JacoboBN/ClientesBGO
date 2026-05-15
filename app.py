@@ -25,7 +25,7 @@ st.caption("Herramienta para elegir zonas, sectores y grupos de clientes potenci
 def cargar_datos():
     df = pd.read_csv(
         "df_2_mas_local_actualizado.csv",
-        sep=";",
+        sep=",",
         encoding="utf-8"
     )
 
