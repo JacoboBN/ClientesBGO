@@ -124,13 +124,13 @@ st.sidebar.markdown("### Punto de inicio de ruta")
 
 lat_inicio = st.sidebar.number_input(
     "Latitud inicio",
-    value=40.4168,
+    value=40.4253,
     format="%.6f"
 )
 
 lon_inicio = st.sidebar.number_input(
     "Longitud inicio",
-    value=-3.7038,
+    value=-3.6828,
     format="%.6f"
 )
 
