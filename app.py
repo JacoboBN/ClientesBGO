@@ -257,7 +257,7 @@ max_locales_rotulo = st.sidebar.slider(
     "Máximo de locales por mismo rótulo",
     min_value=3,
     max_value=30,
-    value=1
+    value=3
 )
 
 conteo_rotulos = (
