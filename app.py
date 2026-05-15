@@ -234,7 +234,7 @@ min_locales_rotulo = st.sidebar.slider(
     "Mínimo de locales por mismo rótulo",
     min_value=2,
     max_value=30,
-    value=1
+    value=2
 )
 
 conteo_rotulos = (
@@ -267,7 +267,7 @@ conteo_rotulos = (
 )
 
 rotulos_validos = conteo_rotulos[
-    conteo_rotulos["n_locales"] >= max_locales_rotulo
+    conteo_rotulos["n_locales"] <= max_locales_rotulo
 ]["rotulo_norm"]
 
 df_filtrado = df_filtrado[
