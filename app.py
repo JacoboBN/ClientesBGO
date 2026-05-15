@@ -657,7 +657,7 @@ with col2:
 st.subheader("Grupos de visita detectados")
 
 ranking_clusters = (
-    df_filtrado.groupby("cluster")
+    df_filtrado.groupby("cluster_visita")
     .agg(
         n_locales=("id_local", "nunique"),
         n_rotulos=("rotulo_norm", "nunique"),
@@ -779,7 +779,7 @@ columnas_mostrar = [
     "desc_seccion",
     "desc_division",
     "desc_epigrafe",
-    "cluster",
+    "cluster_visita",
     "lat",
     "lon"
 ]
