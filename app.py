@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import geopandas as gpd
 import folium
+from sklearn.cluster import DBSCAN
+import numpy as np
 
 from streamlit_folium import st_folium
 from sklearn.cluster import KMeans
@@ -111,6 +113,64 @@ df_filtrado = df.copy()
 #     df_filtrado = df_filtrado[
 #         df_filtrado["desc_situacion_local"].isin(situacion_seleccionada)
 #     ]
+
+df_filtrado["google_maps"] = (
+    "https://www.google.com/maps/search/?api=1&query=" +
+    df_filtrado["lat"].astype(str) + "," +
+    df_filtrado["lon"].astype(str)
+)
+
+st.sidebar.markdown("### Punto de inicio de ruta")
+
+lat_inicio = st.sidebar.number_input(
+    "Latitud inicio",
+    value=40.4168,
+    format="%.6f"
+)
+
+lon_inicio = st.sidebar.number_input(
+    "Longitud inicio",
+    value=-3.7038,
+    format="%.6f"
+)
+
+radio_busqueda_m = st.sidebar.slider(
+    "Radio desde punto de inicio",
+    min_value=250,
+    max_value=5000,
+    value=1000,
+    step=250
+)
+
+import numpy as np
+
+def distancia_metros(lat1, lon1, lat2, lon2):
+    R = 6371000
+    phi1 = np.radians(lat1)
+    phi2 = np.radians(lat2)
+    dphi = np.radians(lat2 - lat1)
+    dlambda = np.radians(lon2 - lon1)
+
+    a = (
+        np.sin(dphi / 2) ** 2 +
+        np.cos(phi1) * np.cos(phi2) * np.sin(dlambda / 2) ** 2
+    )
+
+    return 2 * R * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
+
+
+df_filtrado["distancia_inicio_m"] = distancia_metros(
+    lat_inicio,
+    lon_inicio,
+    df_filtrado["lat"],
+    df_filtrado["lon"]
+)
+
+df_filtrado = df_filtrado[
+    df_filtrado["distancia_inicio_m"] <= radio_busqueda_m
+]
+
+
 
 
 # Filtro distrito
@@ -278,13 +338,20 @@ df_filtrado = df_filtrado[
 
 
 # Número de clusters
-n_clusters = st.sidebar.slider(
-    "Número de clusters comerciales",
-    min_value=1,
-    max_value=25,
-    value=5
-)
+# n_clusters = st.sidebar.slider(
+#     "Número de clusters comerciales",
+#     min_value=1,
+#     max_value=25,
+#     value=5
+# )
 
+radio_cluster_metros = st.sidebar.slider(
+    "Radio para agrupar locales cercanos",
+    min_value=100,
+    max_value=1000,
+    value=300,
+    step=50
+)
 
 # Tipo de mapa
 tipo_mapa = st.sidebar.radio(
@@ -292,9 +359,8 @@ tipo_mapa = st.sidebar.radio(
     [
         "Puntos agrupados",
         "Mapa de calor",
-        "Clusters comerciales"
-    ]
-)
+        "Grupos de visita"    
+    ])
 
 
 # Límite de puntos para no hacer lenta la app
@@ -307,22 +373,43 @@ max_puntos_mapa = st.sidebar.slider(
 )
 
 
+# # =========================
+# # CLUSTERS
+# # =========================
+
+# if len(df_filtrado) >= n_clusters and len(df_filtrado) > 0:
+#     modelo = KMeans(
+#         n_clusters=n_clusters,
+#         random_state=42,
+#         n_init=10
+#     )
+
+#     df_filtrado["cluster"] = modelo.fit_predict(
+#         df_filtrado[["lat", "lon"]]
+#     )
+# else:
+#     df_filtrado["cluster"] = 0
+
+
 # =========================
-# CLUSTERS
+# GRUPOS DE VISITA POR CERCANÍA REAL
 # =========================
 
-if len(df_filtrado) >= n_clusters and len(df_filtrado) > 0:
-    modelo = KMeans(
-        n_clusters=n_clusters,
-        random_state=42,
-        n_init=10
+if len(df_filtrado) > 0:
+    coords = np.radians(df_filtrado[["lat", "lon"]])
+
+    kms_por_radian = 6371.0088
+    epsilon = (radio_cluster_metros / 1000) / kms_por_radian
+
+    modelo = DBSCAN(
+        eps=epsilon,
+        min_samples=2,
+        metric="haversine"
     )
 
-    df_filtrado["cluster"] = modelo.fit_predict(
-        df_filtrado[["lat", "lon"]]
-    )
+    df_filtrado["cluster"] = modelo.fit_predict(coords)
 else:
-    df_filtrado["cluster"] = 0
+    df_filtrado["cluster"] = -1
 
 
 # =========================
@@ -412,22 +499,34 @@ with col1:
                 popup = f"""
                 <b>{row.get('rotulo', '')}</b><br>
                 <b>Actividad:</b> {row.get('desc_epigrafe', '')}<br>
-                <b>División:</b> {row.get('desc_division', '')}<br>
-                <b>Sección:</b> {row.get('desc_seccion', '')}<br>
                 <b>Distrito:</b> {row.get('desc_distrito_local', '')}<br>
                 <b>Barrio:</b> {row.get('desc_barrio_local', '')}<br>
                 <b>Dirección:</b> {row.get('direccion', '')}<br>
-                <b>Agrupación:</b> {row.get('nombre_agrupacion', '')}<br>
-                <b>Tipo agrupación:</b> {row.get('desc_tipo_agrup', '')}<br>
-                <b>Cluster:</b> {row.get('cluster', '')}
+                <b>Grupo de visita:</b> {row.get('cluster_visita', '')}<br>
+                <b>Distancia desde inicio:</b> {round(row.get('distancia_inicio_m', 0), 0)} m<br>
+                <a href="{row.get('google_maps', '')}" target="_blank">Abrir en Google Maps</a>
                 """
+
+
+                # popup = f"""
+                # <b>{row.get('rotulo', '')}</b><br>
+                # <b>Actividad:</b> {row.get('desc_epigrafe', '')}<br>
+                # <b>División:</b> {row.get('desc_division', '')}<br>
+                # <b>Sección:</b> {row.get('desc_seccion', '')}<br>
+                # <b>Distrito:</b> {row.get('desc_distrito_local', '')}<br>
+                # <b>Barrio:</b> {row.get('desc_barrio_local', '')}<br>
+                # <b>Dirección:</b> {row.get('direccion', '')}<br>
+                # <b>Agrupación:</b> {row.get('nombre_agrupacion', '')}<br>
+                # <b>Tipo agrupación:</b> {row.get('desc_tipo_agrup', '')}<br>
+                # <b>Cluster:</b> {row.get('cluster', '')}
+                # """
 
                 folium.Marker(
                     location=[row["lat"], row["lon"]],
                     popup=folium.Popup(popup, max_width=350)
                 ).add_to(marker_cluster)
 
-        elif tipo_mapa == "Clusters comerciales":
+        elif tipo_mapa == "Grupos de visita":
             for _, row in df_mapa.iterrows():
                 popup = f"""
                 <b>{row.get('rotulo', '')}</b><br>
@@ -450,6 +549,54 @@ with col1:
             width=950,
             height=650
         )
+
+
+conteo_por_cluster = (
+    df_filtrado.groupby("cluster_visita")
+    .agg(locales_en_cluster=("id_local", "nunique"))
+    .reset_index()
+)
+
+df_filtrado = df_filtrado.merge(
+    conteo_por_cluster,
+    on="cluster_visita",
+    how="left"
+)
+
+df_filtrado["score_local"] = (
+    df_filtrado["locales_en_cluster"].fillna(0) * 2
+    - df_filtrado["distancia_inicio_m"].fillna(999999) / 500
+)
+
+
+locales_recomendados = df_filtrado.sort_values(
+    "score_local",
+    ascending=False
+)
+
+st.subheader("Locales recomendados para visitar primero")
+
+st.dataframe(
+    locales_recomendados[
+        [
+            "rotulo",
+            "google_maps",
+            "desc_epigrafe",
+            "desc_distrito_local",
+            "desc_barrio_local",
+            "direccion",
+            "cluster_visita",
+            "locales_en_cluster",
+            "distancia_inicio_m"
+        ]
+    ].head(50),
+    width="stretch"
+)
+
+
+
+
+
 
 
 with col2:
@@ -504,10 +651,10 @@ with col2:
 
 
 # =========================
-# CLUSTERS COMERCIALES
+# GRUPOS DE VISITA POR CERCANÍA REAL
 # =========================
 
-st.subheader("Clusters comerciales detectados")
+st.subheader("Grupos de visita detectados")
 
 ranking_clusters = (
     df_filtrado.groupby("cluster")
@@ -566,6 +713,54 @@ st.dataframe(
 )
 
 
+
+# ==
+# Recomendacion para visitar
+# ==
+ranking_visitas = (
+    df_filtrado[df_filtrado["cluster_visita"] != -1]
+    .groupby("cluster_visita")
+    .agg(
+        n_locales=("id_local", "nunique"),
+        n_rotulos=("rotulo_norm", "nunique"),
+        n_epigrafes=("desc_epigrafe", "nunique"),
+        distrito_principal=(
+            "desc_distrito_local",
+            lambda x: x.mode().iloc[0] if len(x.mode()) > 0 else ""
+        ),
+        barrio_principal=(
+            "desc_barrio_local",
+            lambda x: x.mode().iloc[0] if len(x.mode()) > 0 else ""
+        ),
+        actividad_principal=(
+            "desc_epigrafe",
+            lambda x: x.mode().iloc[0] if len(x.mode()) > 0 else ""
+        ),
+        lat_media=("lat", "mean"),
+        lon_media=("lon", "mean")
+    )
+    .reset_index()
+)
+
+ranking_visitas["score_visita"] = (
+    ranking_visitas["n_locales"] * 2 +
+        ranking_visitas["n_rotulos"] * 1.5 +
+        ranking_visitas["n_epigrafes"] * 1
+)
+
+ranking_visitas = ranking_visitas.sort_values(
+    "score_visita",
+    ascending=False
+)
+
+
+st.info(
+    f"La mejor zona tiene {int(ranking_visitas.iloc[0]['n_locales'])} locales "
+    f"cercanos en {ranking_visitas.iloc[0]['barrio_principal']}, "
+    f"{ranking_visitas.iloc[0]['distrito_principal']}."
+)
+
+
 # =========================
 # DATOS FILTRADOS
 # =========================
@@ -575,6 +770,7 @@ st.subheader("Locales filtrados")
 columnas_mostrar = [
     "id_local",
     "rotulo",
+    "google_maps",
     "desc_distrito_local",
     "desc_barrio_local",
     "direccion",
