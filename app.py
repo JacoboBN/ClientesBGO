@@ -476,7 +476,7 @@ with col2:
 
     st.dataframe(
         ranking_barrios.head(20),
-        use_container_width=True
+        width='stretch'
     )
 
     st.markdown("#### Ranking por actividad")
@@ -500,7 +500,7 @@ with col2:
 
     st.dataframe(
         ranking_actividad.head(20),
-        use_container_width=True
+        width='stretch'
     )
 
 
@@ -536,7 +536,7 @@ ranking_clusters = (
 
 st.dataframe(
     ranking_clusters,
-    use_container_width=True
+    width='stretch'
 )
 
 
@@ -563,7 +563,7 @@ ranking_rotulos = (
 
 st.dataframe(
     ranking_rotulos.head(100),
-    use_container_width=True
+    width='stretch'
 )
 
 
@@ -597,7 +597,7 @@ columnas_mostrar = [
 
 st.dataframe(
     df_filtrado[columnas_mostrar],
-    use_container_width=True
+    width='stretch'
 )
 
 
