@@ -105,7 +105,7 @@ st.sidebar.header("Filtros comerciales")
 #     default=["Todas"]
 # )
 
-# df_filtrado = df.copy()
+df_filtrado = df.copy()
 
 # if "Todas" not in situacion_seleccionada:
 #     df_filtrado = df_filtrado[
